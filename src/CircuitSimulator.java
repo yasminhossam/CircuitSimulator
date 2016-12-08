@@ -1,6 +1,7 @@
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
+import java.util.HashSet;
 import java.util.Vector;
 
 import Jama.Matrix;
@@ -15,7 +16,6 @@ public class CircuitSimulator {
 		Component[]components = new Component[20];
 		int[] nodes = new int[20];
 		int m = 0;
-		int n = 2;
 		int i=0;
 		int j=0;
 		Vector<Integer> myVector = new Vector<Integer> ();
@@ -33,6 +33,8 @@ public class CircuitSimulator {
 					m++;
 				int node1 = Character.getNumericValue(words[1].charAt(1));
 				int node2 = Character.getNumericValue(words[2].charAt(1));
+				myVector.add(node1);
+				myVector.add(node2);
 				double value = Double.parseDouble(words[3]);
 				double initvalue = Double.parseDouble(words[4]);
 				components[i]= new Component(type,node1,node2,value,initvalue);
@@ -43,11 +45,11 @@ public class CircuitSimulator {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-		/*for (int j=1; j<i; j++){
-			for (int k=j; k<=0; k--){
-				if (components[j].node1 == components[k].node1 || components)
-			}
-		}*/
+		myVector=new Vector(new HashSet(myVector));
+		int n=myVector.size()-1;
+		for (int k=0; k<myVector.size(); k++){
+			System.out.println(myVector.elementAt(k));
+		}
 		double[][] array = {{1.,2.,3},{4.,5.,6.},{7.,8.,10.}};
 		Matrix A = new Matrix(array);
 		Matrix b = Matrix.random(3,1);
