@@ -13,7 +13,7 @@ public class CircuitSimulator {
 		// TODO Auto-generated method stub
 		BufferedReader br = null;
 		FileReader fr = null;
-		String filename = "7.txt";
+		String filename = "5.txt";
 		Vector<Component> components = new Vector<Component> ();
 		int m = 0;
 		int v = 0;
@@ -131,16 +131,39 @@ public class CircuitSimulator {
 		
 		Matrix Z = new Matrix(new_z);
 		Matrix x = A.solve(Z);
-		
-		for (float time = h; time < endtime; time+=h) {
-			
-			
-			
-		}
-		
 		for (int i = 0; i < m+n; i++) {
 			System.out.println(x.get(i, 0));
 		}
+		
+		for (float time = 2*h; time <= endtime; time+=h) {
+			for (int i = 0; i < new_z.length; i++) {
+				new_z[i][0] = z[i][0];
+			}
+			s=n+v;
+			for (int i = 0; i < components.size(); i++) {
+				if (components.elementAt(i).type.equals("C")){
+					if (components.elementAt(i).node2 != 0){
+						new_z[components.elementAt(i).node2-1][0] -= (components.elementAt(i).value/h) * (x.get(components.elementAt(i).node1-1, 0) - x.get(components.elementAt(i).node2-1, 0));
+						new_z[components.elementAt(i).node1-1][0] += (components.elementAt(i).value/h) * (x.get(components.elementAt(i).node1-1, 0) - x.get(components.elementAt(i).node2-1, 0));
+					}
+					else {
+						new_z[components.elementAt(i).node1-1][0] += (components.elementAt(i).value/h) * (x.get(components.elementAt(i).node1-1, 0));
+					}
+				}
+				else if (components.elementAt(i).type.equals("I")){
+					z[s][0] -= (components.elementAt(i).value/h) * x.get(s, 0);
+					s++;
+				}
+			}
+			
+			Z = new Matrix(new_z);
+			x = A.solve(Z);
+			for (int i = 0; i < m+n; i++) {
+				System.out.println(x.get(i, 0));
+			}
+			
+		}
+		
 		
 	}
 
