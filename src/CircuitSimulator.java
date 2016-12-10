@@ -1,6 +1,9 @@
 import java.io.BufferedReader;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.IOException;
+import java.io.PrintStream;
 import java.util.HashSet;
 import java.util.Scanner;
 import java.util.Vector;
@@ -13,13 +16,16 @@ public class CircuitSimulator {
 		// TODO Auto-generated method stub
 		BufferedReader br = null;
 		FileReader fr = null;
-		String filename = "5.txt";
+		Scanner reader = new Scanner(System.in);
+		System.out.println("file: ");
+		String input = reader.next();
+		String filename = input+".txt";
 		Vector<Component> components = new Vector<Component> ();
 		int m = 0;
 		int v = 0;
 		Vector<Integer> nodes = new Vector<Integer> ();
 
-		Scanner reader = new Scanner(System.in);  // Reading from System.in
+		
 		System.out.println("h: ");
 		float h = reader.nextFloat(); 
 		System.out.println("end time: ");
@@ -110,7 +116,26 @@ public class CircuitSimulator {
 				a[s][s]-=components.elementAt(i).value/h;
 				s++;
 			}
+			
 		}
+		PrintStream out = null;
+		try {
+			out = new PrintStream(new FileOutputStream(input+"_solution.txt"));
+		} catch (FileNotFoundException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		out.print("timestep ");
+		for (int i = 1; i < n+1; i++) {
+			out.print("V"+nodes.elementAt(i)+" ");
+		}
+		for (int i = 0; i < v; i++) {
+			out.print("I_Vsrc" + i + " ");
+		}
+		for (int i = 0; i < m-v; i++) {
+			out.print("I_ind" +i + " ");
+		}
+		out.println(" ");
 		Matrix A = new Matrix(a);
 		double [][] new_z = new double[m+n][1];
 		for (int i = 0; i < new_z.length; i++) {
@@ -131,11 +156,13 @@ public class CircuitSimulator {
 		
 		Matrix Z = new Matrix(new_z);
 		Matrix x = A.solve(Z);
+		out.print( h + " ");
 		for (int i = 0; i < m+n; i++) {
-			System.out.println(x.get(i, 0));
+			out.print(x.get(i, 0) + " ");
 		}
+		out.println(" ");
 		
-		for (float time = 2*h; time <= endtime; time+=h) {
+		for (float time = 2*h; (float)Math.round(time * 10000d) / 10000d  <= endtime; time+=h) {
 			for (int i = 0; i < new_z.length; i++) {
 				new_z[i][0] = z[i][0];
 			}
@@ -158,14 +185,14 @@ public class CircuitSimulator {
 			
 			Z = new Matrix(new_z);
 			x = A.solve(Z);
+			out.print(time + " ");
 			for (int i = 0; i < m+n; i++) {
-				System.out.println(x.get(i, 0));
+				out.print(x.get(i, 0) + " ");
 			}
+			out.println(" ");
 			
 		}
-		
-		
 	}
-
+	
 }
 
