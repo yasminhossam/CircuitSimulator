@@ -2,6 +2,7 @@ import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.HashSet;
+import java.util.Scanner;
 import java.util.Vector;
 
 import Jama.Matrix;
@@ -12,11 +13,18 @@ public class CircuitSimulator {
 		// TODO Auto-generated method stub
 		BufferedReader br = null;
 		FileReader fr = null;
-		String filename = "1.txt";
+		String filename = "7.txt";
 		Vector<Component> components = new Vector<Component> ();
 		int m = 0;
+		int v = 0;
 		Vector<Integer> nodes = new Vector<Integer> ();
 
+		Scanner reader = new Scanner(System.in);  // Reading from System.in
+		System.out.println("h: ");
+		float h = reader.nextFloat(); 
+		System.out.println("end time: ");
+		float endtime = reader.nextFloat();
+		
 		try {
 			fr = new FileReader(filename);
 			br = new BufferedReader(fr);
@@ -25,7 +33,11 @@ public class CircuitSimulator {
 			while ((sCurrentLine = br.readLine()) != null) {
 				String[] words = sCurrentLine.split(" ");
 				String type=words[0];
-				if (type.equals("Vsrc"))
+				if (type.equals("Vsrc")){
+					m++;
+					v++;
+				}
+				else if (type.equals("I"))	
 					m++;
 				int node1 = Character.getNumericValue(words[1].charAt(1));
 				int node2 = Character.getNumericValue(words[2].charAt(1));
@@ -37,10 +49,6 @@ public class CircuitSimulator {
 			}
 		} catch (IOException e) {
 			e.printStackTrace();
-		}
-		
-		for (int i = 0; i < components.size(); i++) {
-			System.out.println(components.elementAt(i).type +" "+ components.elementAt(i).node1 +" "+ components.elementAt(i).node2 +" "+ components.elementAt(i).value +" "+ components.elementAt(i).initial_value);
 		}
 		
 		nodes=new Vector(new HashSet(nodes));
@@ -58,66 +66,82 @@ public class CircuitSimulator {
 			z[i][0]=0;
 		}
 		int k=n;
+		int s=n+v;
 		for (int i = 0; i < components.size(); i++) {
 			if (components.elementAt(i).type.equals("R")){
+				a[components.elementAt(i).node1-1][components.elementAt(i).node1-1]+=1/components.elementAt(i).value;
 				if (components.elementAt(i).node2 != 0){
-					a[components.elementAt(i).node1-1][components.elementAt(i).node1-1]+=1/components.elementAt(i).value;
 					a[components.elementAt(i).node1-1][components.elementAt(i).node2-1]-=1/components.elementAt(i).value;
 					a[components.elementAt(i).node2-1][components.elementAt(i).node1-1]-=1/components.elementAt(i).value;
 					a[components.elementAt(i).node2-1][components.elementAt(i).node2-1]+=1/components.elementAt(i).value;
 				}
-				else {
-					a[components.elementAt(i).node1-1][components.elementAt(i).node1-1]+=1/components.elementAt(i).value;
-				}
 			}
 			else if (components.elementAt(i).type.equals("Isrc") ){
+				z[components.elementAt(i).node1-1][0]+=components.elementAt(i).value;
 				if (components.elementAt(i).node2 != 0){
-					z[components.elementAt(i).node1-1][0]+=components.elementAt(i).value;
 					z[components.elementAt(i).node2-1][0]-=components.elementAt(i).value;
-				}
-				else {
-					z[components.elementAt(i).node1-1][0]+=components.elementAt(i).value;
 				}
 			}
 			else if (components.elementAt(i).type.equals("Vsrc")){
+				a[components.elementAt(i).node1-1][k]+=1;
+				a[k][components.elementAt(i).node1-1]+=1;
 				if (components.elementAt(i).node2 != 0){
-					a[components.elementAt(i).node1-1][k]+=1;
 					a[components.elementAt(i).node2-1][k]-=1;
-					a[k][components.elementAt(i).node1-1]+=1;
 					a[k][components.elementAt(i).node2-1]-=1;
-				}
-				else {
-					a[components.elementAt(i).node1-1][k]+=1;
-					a[k][components.elementAt(i).node1-1]+=1;
 				}
 				z[k][0]+=components.elementAt(i).value;
 				k++;
 			}
-		}
-		System.out.println("m:"+m +" n:" +n);
-		for (int i = 0; i < m+n; i++) {
-			for (int j = 0; j < m+n; j++) {
-				System.out.print(a[i][j] + " ");
+			else if (components.elementAt(i).type.equals("C")){
+				a[components.elementAt(i).node1-1][components.elementAt(i).node1-1]+=components.elementAt(i).value/h;
+				if (components.elementAt(i).node2 != 0){
+					a[components.elementAt(i).node1-1][components.elementAt(i).node2-1]-=components.elementAt(i).value/h;
+					a[components.elementAt(i).node2-1][components.elementAt(i).node1-1]-=components.elementAt(i).value/h;
+					a[components.elementAt(i).node2-1][components.elementAt(i).node2-1]+=components.elementAt(i).value/h;
+				}
 			}
-			System.out.println("");
-		}
-		for (int i = 0; i < z.length; i++) {
-			System.out.println(z[i][0]);
+			else if (components.elementAt(i).type.equals("I")){
+				if (components.elementAt(i).node2 != 0){
+					a[components.elementAt(i).node2-1][s]-=1;
+					a[s][components.elementAt(i).node2-1]-=1;
+				}
+				a[components.elementAt(i).node1-1][s]+=1;
+				a[s][components.elementAt(i).node1-1]+=1;
+				a[s][s]-=components.elementAt(i).value/h;
+				s++;
+			}
 		}
 		Matrix A = new Matrix(a);
-		Matrix Z = new Matrix(z);
+		double [][] new_z = new double[m+n][1];
+		for (int i = 0; i < new_z.length; i++) {
+			new_z[i][0] = z[i][0];
+		}
+		s=n+v;
+		for (int i = 0; i < components.size(); i++) {
+			if (components.elementAt(i).type.equals("C")){
+				new_z[components.elementAt(i).node1-1][0] += (components.elementAt(i).value/h) * components.elementAt(i).initial_value;
+				if (components.elementAt(i).node2 != 0)
+					new_z[components.elementAt(i).node2-1][0] -= (components.elementAt(i).value/h) * components.elementAt(i).initial_value;
+			}
+			else if (components.elementAt(i).type.equals("I")){
+				z[s][0] -= (components.elementAt(i).value/h) * components.elementAt(i).initial_value;
+				s++;
+			}
+		}
+		
+		Matrix Z = new Matrix(new_z);
 		Matrix x = A.solve(Z);
+		
+		for (float time = h; time < endtime; time+=h) {
+			
+			
+			
+		}
+		
 		for (int i = 0; i < m+n; i++) {
 			System.out.println(x.get(i, 0));
 		}
 		
-		/*		
-		double[][] array = {{1.,2.,3},{4.,5.,6.},{7.,8.,10.}};
-		Matrix A = new Matrix(array);
-		Matrix b = Matrix.random(3,1);
-		Matrix x = A.solve(b);
-		Matrix Residual = A.times(x).minus(b);
-		double rnorm = Residual.normInf();*/
 	}
 
 }
